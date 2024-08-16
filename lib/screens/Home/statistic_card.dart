@@ -1,12 +1,11 @@
 import 'bottom_draw.dart';
-import 'package:flutter/material.dart';
-import 'package:jolie/constant/color.dart';
-import 'package:jolie/constant/typography.dart';
+import 'package:jolie/common.dart';
 
 class StatisticCard extends StatefulWidget {
-  final String status;
+  final  String status;
+  final  String bookingNo;
 
-  const StatisticCard({required this.status, super.key});
+  const StatisticCard({required this.status, required this.bookingNo, super.key});
 
   @override
   State<StatisticCard> createState() => _StatisticCardState();
@@ -21,7 +20,7 @@ class _StatisticCardState extends State<StatisticCard> {
         borderRadius: BorderRadius.circular(10.0),
       ),
       width: double.infinity,
-      height: 240.0,
+      height: 220.0,
       child: Padding(
         padding: const EdgeInsets.all(10.0),
         child: Row(
@@ -44,7 +43,7 @@ class _StatisticCardState extends State<StatisticCard> {
                       width: 100.0,
                     ),
                     Text(
-                      "02 bookings",
+                      widget.bookingNo,
                       textAlign: TextAlign.center,
                       style: Fonts.medium.copyWith(
                         color: lightColor,
@@ -65,17 +64,13 @@ class _StatisticCardState extends State<StatisticCard> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+
                     Text(
                       widget.status,
-                      style: const TextStyle(fontSize: 20),
-                    ),
-                    SizedBox.fromSize(size: const Size.fromWidth(4.0)),
-                    Text(
-                      "View Details",
                       textAlign: TextAlign.center,
                       style: Fonts.thin.copyWith(
                         color: secondaryColor,
-                        fontSize: 12.0,
+                        fontSize: 18.0,
                       ),
                     ),
                     SizedBox.fromSize(size: const Size.fromWidth(4.0)),
@@ -96,7 +91,7 @@ class _StatisticCardState extends State<StatisticCard> {
                                     borderRadius: BorderRadius.vertical(
                                         top: Radius.circular(20.0))),
                                 builder: (context) {
-                                  return const BottomDraw();
+                                  return const SafeArea(child:  BottomDraw());
                                 });
                           },
                           icon: const Icon(

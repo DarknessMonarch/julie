@@ -1,8 +1,6 @@
 import 'dart:async';
-
-import 'package:flutter/material.dart';
+import 'package:jolie/common.dart';
 import 'package:jolie/screens/Home/home.dart';
-import 'package:jolie/constant/color.dart';
 
 class Splash extends StatefulWidget {
   const Splash({super.key});

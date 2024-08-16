@@ -1,7 +1,8 @@
+import 'dart:async';
 import 'package:intl/intl.dart';
-import 'package:flutter/material.dart';
-import 'package:jolie/constant/color.dart';
-import 'package:jolie/constant/typography.dart';
+import 'package:jolie/common.dart';
+import 'package:jolie/models/date_available.dart';
+import 'package:jolie/database/database_helper.dart';
 
 class BottomDraw extends StatefulWidget {
   const BottomDraw({super.key});
@@ -10,9 +11,28 @@ class BottomDraw extends StatefulWidget {
   State<BottomDraw> createState() => _BottomDrawState();
 }
 
+
+
 class _BottomDrawState extends State<BottomDraw> {
   final dateController = TextEditingController();
   Set<String> availableDates = {};
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAvailableDates();
+  }
+
+  Future<void> _loadAvailableDates() async {
+    final dbHelper = DatabaseHelper();
+    final dates = await dbHelper.getAvailableDates();
+    if (mounted) {
+      setState(() {
+        availableDates = dates.map((date) => date.date).toSet();
+      });
+    }
+  }
 
   Future<void> _selectDate() async {
     final DateTime? selectedDate = await showDatePicker(
@@ -39,7 +59,7 @@ class _BottomDrawState extends State<BottomDraw> {
       },
     );
 
-    if (selectedDate != null) {
+    if (selectedDate != null && mounted) {
       final formattedDate = DateFormat('EEEE/dd/MMM').format(selectedDate);
       setState(() {
         dateController.text = formattedDate;
@@ -47,19 +67,70 @@ class _BottomDrawState extends State<BottomDraw> {
     }
   }
 
-  void addAvailableDates() {
+  Future<void> addAvailableDates() async {
     if (dateController.text.isNotEmpty) {
-      setState(() {
-        availableDates.add(dateController.text);
-        dateController.clear();
-      });
+      final newDate = dateController.text;
+      if (mounted) {
+        setState(() {
+          availableDates.add(newDate);
+          dateController.clear();
+        });
+      }
+
+      final dbHelper = DatabaseHelper();
+      await dbHelper.insertAvailableDate(AvailableDateModel(date: newDate));
     }
   }
 
-  void removeAvailableDates(String date) {
+  Future<void> removeAvailableDates(String date) async {
+    if (mounted) {
+      setState(() {
+        availableDates.remove(date);
+      });
+    }
+
+    final dbHelper = DatabaseHelper();
+    await dbHelper.deleteAvailableDate(date);
+  }
+
+  Future<void> _saveAvailableDates() async {
     setState(() {
-      availableDates.remove(date);
+      _isLoading = true;
     });
+
+    try {
+      // Simulate a delay for saving the data
+      await Future.delayed(const Duration(seconds: 2));
+
+      // Save the availableDates to the database
+      final dbHelper = DatabaseHelper();
+      await Future.wait(
+        availableDates.map((date) => dbHelper.insertAvailableDate(AvailableDateModel(date: date))),
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+        _showSuccessToast();
+      }
+    } catch (e) {
+      if (mounted) {
+        _showFailureToast();
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _showSuccessToast() {
+    successToast(context, "Dates saved successfully");
+  }
+
+  void _showFailureToast() {
+    failureToast(context, "Error saving dates");
   }
 
   @override
@@ -68,10 +139,11 @@ class _BottomDrawState extends State<BottomDraw> {
     super.dispose();
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 450,
+      height: 500.0,
       width: double.infinity,
       decoration: const BoxDecoration(
         border: Border(
@@ -230,10 +302,12 @@ class _BottomDrawState extends State<BottomDraw> {
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: Text(
+                onPressed: _isLoading ? null : _saveAvailableDates,
+                child: _isLoading
+                    ? const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(lightColor),
+                )
+                    : Text(
                   "Save",
                   textAlign: TextAlign.start,
                   style: Fonts.medium.copyWith(
